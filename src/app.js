@@ -579,3 +579,30 @@ async function autoLayout() {
     addBotMessage('❌ Failed to auto-layout diagram: ' + error.message);
   }
 }
+
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomResetBtn = document.getElementById('zoom-reset');
+
+zoomInBtn.addEventListener('click', () => {
+  changeZoom(1.2); // Zoom in by +20%
+});
+
+zoomOutBtn.addEventListener('click', () => {
+  changeZoom(0.8); // Zoom out by -20%
+});
+
+zoomResetBtn.addEventListener('click', () => {
+  modeler.get('canvas').zoom('fit-viewport');
+});
+
+function changeZoom(factor) {
+  const canvas = modeler.get('canvas');
+  const currentZoom = canvas.zoom();
+  const newZoom = currentZoom * factor;
+
+  // Optional: limit min/max zoom
+  if (newZoom < 0.2 || newZoom > 4) return;
+
+  canvas.zoom(newZoom);
+}

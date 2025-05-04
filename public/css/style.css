@@ -484,9 +484,10 @@ body {
 .zoom-group {
   display: flex;
   gap: 0;
-  border: 1px solid #3b82f6;
+  border: 1.5px solid #3b82f6;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1);
 }
 
 .zoom-group button {
@@ -498,11 +499,6 @@ body {
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
   border-radius: 0px;
-}
-
-.zoom-group button:hover {
-  background: #3b82f6;
-  color: white;
 }
 
 .zoom-group button + button {
