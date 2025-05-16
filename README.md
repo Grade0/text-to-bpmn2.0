@@ -44,7 +44,7 @@ cd text-to-bpmn2.0
 ### 2. Install dependencies
 
 ```bash
-npm run build
+npm install
 ```
 
 ### 3. Create `.env` file
