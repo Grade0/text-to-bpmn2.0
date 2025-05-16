@@ -9,16 +9,26 @@ This project converts natural language descriptions into full BPMN 2.0 XML diagr
 ## 📦 Project Structure
 
 ```
-bpmn-deepseek-nodejs/
-├── package.json         # Project metadata and dependencies
-├── .env                 # Your API keys (keep secret)
-├── server.js            # Node.js backend server
+Text-to-BPMN 2.0/
+├── package.json
+├── package-lock.json
+├── .env                         # where API keys are stored (keep secret)
+├── rollup.config.mjs            # bundles app.js into bundle-app.js
+├── server.js                    # Node.js backend and API handler
+├── system_prompt.txt
+├── .bpmnlintrc                  # validation rules for BPMN Lint
 ├── public/
-│   ├── index.html       # Main page
-│   ├── css/             # (Optional) custom styles
-│   └── js/
-│       └── app.js       # Frontend logic
-└── README.md            # Project documentation
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── bundle-app.js        # bundled frontend logic
+│   │   └── bundle-app.js.map
+│   ├── diagram/
+│   │   └── default.bpmn         # default diagram example
+│   └── src/
+│       └── app.js               # main frontend logic, imports bpmnlint
+└── node_modules/
 ```
 
 ---
@@ -28,13 +38,13 @@ bpmn-deepseek-nodejs/
 ### 1. Clone or download this project folder
 
 ```bash
-cd your-folder-name
+cd text-to-bpmn2.0
 ```
 
 ### 2. Install dependencies
 
 ```bash
-npm install
+npm run build
 ```
 
 ### 3. Create `.env` file
@@ -43,6 +53,7 @@ At the root level, create a `.env` file with:
 
 ```bash
 DEEPSEEK_API_KEY=sk-your-deepseek-api-key-here
+OPENAI_API_KEY=sk-your-chatgpt-api-key-here
 ```
 
 Replace with your real DeepSeek API key.
@@ -105,11 +116,3 @@ https://your-app-name.onrender.com
 
 - Never expose your `.env` file to the public.
 - Always add `.env` to your `.gitignore` when uploading to GitHub.
-
----
-
-## 🙌 Good luck and have fun!
-
-If you need help deploying or scaling your app, feel free to ask!
-
-Built with ❤️ using Node.js, Express, BPMN-JS, and DeepSeek API.
