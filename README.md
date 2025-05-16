@@ -9,16 +9,26 @@ This project converts natural language descriptions into full BPMN 2.0 XML diagr
 ## 📦 Project Structure
 
 ```
-bpmn-deepseek-nodejs/
-├── package.json         # Project metadata and dependencies
-├── .env                 # Your API keys (keep secret)
-├── server.js            # Node.js backend server
+Text-to-BPMN 2.0/
+├── package.json
+├── package-lock.json
+├── .env                          # where API keys are stored
+├── rollup.config.mjs            # bundles app.js into bundle-app.js
+├── server.js                    # Node.js backend and API handler
+├── system_prompt.txt
+├── .bpmnlintrc                  # validation rules for BPMN Lint
 ├── public/
-│   ├── index.html       # Main page
-│   ├── css/             # (Optional) custom styles
-│   └── js/
-│       └── app.js       # Frontend logic
-└── README.md            # Project documentation
+│   ├── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── bundle-app.js        # bundled frontend logic
+│   │   └── bundle-app.js.map
+│   ├── diagram/
+│   │   └── default.bpmn         # default diagram example
+│   └── src/
+│       └── app.js               # main frontend logic, imports bpmnlint
+└── node_modules/
 ```
 
 ---
