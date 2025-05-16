@@ -47,6 +47,12 @@ cd text-to-bpmn2.0
 npm install
 ```
 
+### 3. Build the frontend
+
+```bash
+npm run build
+```
+
 ### 3. Create `.env` file
 
 At the root level, create a `.env` file with:
@@ -107,6 +113,7 @@ https://your-app-name.onrender.com
 | Command | What it does |
 |:---|:---|
 | `npm install` | Install all dependencies |
+| `npm run build` | Build the frontend logic |
 | `npm start` | Start the Node.js server |
 | `npm run dev` | Start server with auto-restart using nodemon |
 
