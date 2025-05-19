@@ -1,4 +1,4 @@
-// public/js/app.js
+// SPDX-License-Identifier: MIT
 
 import * as BpmnAutoLayout from 'bpmn-auto-layout';
 import BpmnModeler from 'bpmn-js/lib/Modeler';

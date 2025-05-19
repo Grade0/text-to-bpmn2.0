@@ -1,8 +1,8 @@
 # Text-to-BPMN 2.0 Node.js Project
 
-Welcome to your **Text-to-BPMN 2.0** application powered by **Node.js** and **Express**!
+**Text-to-BPMN 2.0** is a web-based tool that allows users to generate executable BPMN 2.0 process diagrams from natural language descriptions. By leveraging powerful large language models such as DeepSeek and OpenAI, the application transforms informal text into well-structured BPMN XML, which can be visualized, validated, and edited directly in the browser. It is designed to lower the technical barrier of process modeling and support business analysts, developers, and non-technical users alike in capturing workflows quickly and intuitively.
 
-This project converts natural language descriptions into full BPMN 2.0 XML diagrams using DeepSeek's API.
+Built with **Node.js**, **Express**, and the **bpmn-js** toolkit, this project integrates API-based language model inference with client-side BPMN rendering and semantic validation.
 
 ---
 
@@ -10,6 +10,7 @@ This project converts natural language descriptions into full BPMN 2.0 XML diagr
 
 ```
 Text-to-BPMN 2.0/
+├── LICENSE
 ├── package.json
 ├── package-lock.json
 ├── .env                         # where API keys are stored (keep secret)
@@ -123,3 +124,9 @@ https://your-app-name.onrender.com
 
 - Never expose your `.env` file to the public.
 - Always add `.env` to your `.gitignore` when uploading to GitHub.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
