@@ -77,7 +77,7 @@ Visit:
 http://localhost:3000
 ```
 
-✅ Your Text-to-BPMN app will be live on your local machine.
+✅ Text-to-BPMN2.0 app will be live on your local machine.
 
 ---
 
@@ -100,7 +100,7 @@ You can easily host it using platforms like:
 4. Set environment variable `DEEPSEEK_API_KEY` and `OPENAI_API_KEY` in the platform dashboard.
 5. Deploy.
 
-That's it — your app will be live with its own URL!
+That's it — the app will be live with its own URL!
 
 Example:
 ```
