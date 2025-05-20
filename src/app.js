@@ -1,3 +1,4 @@
+// Copyright (c) 2025 Davide Chen
 // SPDX-License-Identifier: MIT
 
 import * as BpmnAutoLayout from 'bpmn-auto-layout';
@@ -6,7 +7,7 @@ import lintModule   from 'bpmn-js-bpmnlint';
 import lintConfig   from '../.bpmnlintrc';   // grazie al plug-in Rollup
 import { marked } from 'marked';
 
-// ------- modeler + linter ----------
+/* ───────────  MODELER + LINTER ─────────── */
 const modeler = new BpmnModeler({
   container: '#canvas',
 
@@ -32,7 +33,9 @@ function toggleFullscreen() {
   fullscreenLabel.textContent = isFullscreen ? 'Collapse' : 'Expand';
 }
 
-// Load default BPMN diagram from external file
+
+/* ──── LOAD DEFAULT BPMN DIAGRAM FROM EXTERNAL FILE ───── */
+
 const defaultDiagramURL = '../diagram/default.bpmn';
 
 fetch(defaultDiagramURL)
@@ -56,7 +59,9 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
 }
 
-// Chat history layout
+
+/* ────  CHAT HISTORY LAYOUT  ───── */
+
 function sendMSG() {
   const text = chatInput.value.trim();
   if (!text) return;
@@ -82,6 +87,8 @@ chatInput.addEventListener('keydown', e => {
     sendMSG();
   }
 });
+
+/* ─────────── SENDING PROMPT TO SERVER ─────────── */
 
 async function callModelAPI(prompt, onDataChunk) {
   const model = document.getElementById('global-model-select').value;
@@ -137,7 +144,179 @@ async function callModelAPI(prompt, onDataChunk) {
   }
 } 
 
-// Handle sending prompt to server
+/* ─────────── MESSAGE HANDLING ─────────── */
+
+// Creates and shows the "typing…" indicator. 
+function showTypingIndicator() {
+  const indicator = document.createElement('div');
+  indicator.className = 'chat-msg bot';
+  indicator.innerHTML =
+    '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+  chatLog.appendChild(indicator);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return indicator;
+}
+
+// Creates the bot message wrapper (before adding content).
+function createBotMessage() {
+  const el = document.createElement('div');
+  el.className = 'chat-msg bot';
+  chatLog.appendChild(el);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  return el;
+}
+
+/* ─────────── STREAM HANDLING ─────────── */
+
+// Maintains shared state during chunked response
+function initStreamContext() {
+  return {
+    botMessage: null,
+    streamEl: null,
+    fullRaw: ''
+  };
+}
+
+// Initial rendering and progressive chunk appending
+function handleStreamChunk(chunk, ctx) {
+  // 1st chunk: removes the indicator and prepares the containers
+  if (!ctx.botMessage) {
+    chatLog.removeChild(ctx.typingIndicator);
+    ctx.botMessage = createBotMessage();
+    ctx.streamEl = document.createElement('div');
+    ctx.streamEl.id = 'reasoning-stream';
+    ctx.streamEl.style.whiteSpace = 'pre-wrap';
+
+    if (modelStatus.textContent === 'On') {
+      const header = document.createElement('div');
+      header.className = 'msg-header';
+      header.innerText = 'System';
+
+      const reasoningBlock = document.createElement('div');
+      reasoningBlock.className = 'reasoning-block';
+
+      const title = document.createElement('strong');
+      title.textContent = '🤔 Reasoning...';
+
+      ctx.streamEl.className = 'reasoning-text';
+      reasoningBlock.appendChild(title);
+      reasoningBlock.appendChild(ctx.streamEl);
+
+      ctx.botMessage.appendChild(header);
+      ctx.botMessage.appendChild(reasoningBlock);
+    } else {
+      const header = document.createElement('div');
+      header.className = 'msg-header';
+      header.innerText = 'System';
+      ctx.botMessage.appendChild(header);
+      ctx.botMessage.appendChild(ctx.streamEl);
+    }
+  }
+
+  ctx.fullRaw += chunk;
+  ctx.streamEl.textContent += chunk;
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+/* ─────────── FINAL RENDERING ─────────── */
+
+// Splits reasoning and XML output (if present)
+function splitReasoningOutput(raw) {
+  const xmlStart = raw.search(/<\?xml|<bpmn:definitions/i);
+  return xmlStart !== -1
+    ? { reasoning: raw.slice(0, xmlStart).trim(), output: raw.slice(xmlStart).trim() }
+    : { reasoning: raw.trim(), output: '' };
+}
+
+// Converts the XML part into a highlighted Markdown block
+function formatXml(xml) {
+  return marked.parse('```xml\n' + xml + '\n```');
+}
+
+// Rendering the final message output
+function finalizeBotMessage(ctx, startTime) {
+  const { botMessage, fullRaw } = ctx;
+
+  if (!botMessage) return;
+
+  botMessage.innerHTML = ''; 
+
+  if (modelStatus.textContent === 'On') {
+    const { reasoning, output } = splitReasoningOutput(fullRaw);
+
+    if (reasoning) {
+      const block = document.createElement('div');
+      block.className = 'reasoning-block';
+
+      const title = document.createElement('strong');
+      title.textContent = '🤔 Reasoning...';
+
+      const text = document.createElement('div');
+      text.className = 'reasoning-text';
+      text.textContent = reasoning;
+
+      block.appendChild(title);
+      block.appendChild(text);
+      botMessage.appendChild(block);
+    }
+
+    if (output) {
+      const outBlock = document.createElement('div');
+      outBlock.className = 'output-block';
+      outBlock.innerHTML = formatXml(output);
+      botMessage.appendChild(outBlock);
+      hljs.highlightAll();
+    }
+  } else {
+    const header = document.createElement('div');
+    header.className = 'msg-header';
+    header.innerText = 'System';
+
+    const content = document.createElement('div');
+    content.className = 'msg-content';
+    content.innerHTML = marked.parse(fullRaw);
+
+    botMessage.appendChild(header);
+    botMessage.appendChild(content);
+    hljs.highlightAll();
+  }
+
+  botMessage.appendChild(buildReplyInfo(startTime));
+}
+
+// Compute the response time and displays it
+function buildReplyInfo(startTime) {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  const timeStr = minutes ? `${minutes} min ${seconds} sec` : `${seconds} seconds`;
+
+  const info = document.createElement('div');
+  info.className = 'reply-time';
+  info.textContent = `Replied in ${timeStr}`;
+  return info;
+}
+
+/* ─────────── BPMN XML PROCESSING ─────────── */
+
+// Imports BPMN if present and shows the outcome to the user
+async function tryImportBpmn(xml) {
+  if (!xml) {
+    addMsg('No valid BPMN XML found ❌. Please try again.', 'bot');
+    return;
+  }
+
+  try {
+    await modeler.importXML(xml);
+    addMsg('Diagram generated successfully ✅', 'bot');
+  } catch (err) {
+    console.error('❌ Errore durante importXML:', err);
+    addMsg('Generated BPMN contains errors ⚠️. Please try again.', 'bot');
+  }
+}
+
+/* ─────────── MAIN PIPELINE FUNCTION ─────────── */
+
 async function sendPrompt(customText = null) {
   const isCustom = customText !== null;
   const txt = isCustom ? customText.trim() : chatInput.value.trim();
@@ -145,179 +324,31 @@ async function sendPrompt(customText = null) {
 
   const startTime = Date.now();
 
+  // reset input field
   if (!isCustom) {
     chatInput.value = '';
     autoResize(chatInput);
   }
 
-  // Mostra il typing indicator
-  const typingIndicator = document.createElement('div');
-  typingIndicator.className = 'chat-msg bot';
-  typingIndicator.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-  chatLog.appendChild(typingIndicator);
-  chatLog.scrollTop = chatLog.scrollHeight;
-
-  let botMessage = null;
-  let streamEl = null;
-  let fullRaw = '';
+  // Shared state of the streaming
+  const ctx = initStreamContext();
+  ctx.typingIndicator = showTypingIndicator();
 
   try {
-    await callModelAPI(txt, (chunk) => {
-      // Crea il messaggio bot al primo chunk ricevuto (anche se vuoto o solo "\n")
-      if (!botMessage) {
-      chatLog.removeChild(typingIndicator);
+    await callModelAPI(txt, chunk => handleStreamChunk(chunk, ctx));
 
-      botMessage = document.createElement('div');
-      botMessage.className = 'chat-msg bot';
+    // final parsing finale and rendering
+    finalizeBotMessage(ctx, startTime);
 
-      streamEl = document.createElement('div');
-      streamEl.id = 'reasoning-stream';
-      streamEl.style.whiteSpace = 'pre-wrap';
-
-      if (modelStatus.textContent === 'On') {
-
-        // AGGIUNGI QUI IL SYSTEM HEADER
-        const header = document.createElement('div');
-        header.className = 'msg-header';
-        header.innerText = 'System';
-        botMessage.appendChild(header);
-
-        // Reasoning block
-        const reasoningBlock = document.createElement('div');
-        reasoningBlock.className = 'reasoning-block';
-
-        const title = document.createElement('strong');
-        title.textContent = '🤔 Reasoning...';
-
-        streamEl.className = 'reasoning-text';
-        reasoningBlock.appendChild(title);
-        reasoningBlock.appendChild(streamEl);
-
-        // Aggiungi tutto al botMessage
-        botMessage.appendChild(reasoningBlock);
-      } else {
-        
-        const botHeader = document.createElement('div');
-        botHeader.className = 'msg-header';
-        botHeader.innerText = 'System';
-        botMessage.appendChild(botHeader);
-        botMessage.appendChild(streamEl); // standard rendering 
-      }
-
-      chatLog.appendChild(botMessage);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
-
-      // Appendi ogni chunk così com'è (anche se è solo spazio o newline)
-      fullRaw += chunk;
-      streamEl.textContent += chunk;
-      chatLog.scrollTop = chatLog.scrollHeight;
-    });
-
-    // Parsing e sostituzione finale con Markdown
-    const xmlResponse = extractXmlFromResponse(fullRaw);
-
-
-    if (botMessage) {
-      if (modelStatus.textContent === 'On') {
-        // MODELLO REASONER: separa reasoning e output
-
-        const xmlStartIndex = fullRaw.search(/<\?xml|<bpmn:definitions/i);
-
-        let reasoningPart = '';
-        let outputPart = '';
-
-        if (xmlStartIndex !== -1) {
-          reasoningPart = fullRaw.slice(0, xmlStartIndex).trim();
-          outputPart = fullRaw.slice(xmlStartIndex).trim();
-        } else {
-          console.log("no");
-          reasoningPart = fullRaw.trim();
-        }
-
-        botMessage.innerHTML = '';
-
-        // Reasoning visualizzato con stile separato
-        if (reasoningPart) {
-          const reasoningBox = document.createElement('div');
-          reasoningBox.className = 'reasoning-block';
-
-          const title = document.createElement('strong');
-          title.textContent = '🤔 Reasoning...';
-
-          const text = document.createElement('div');
-          text.className = 'reasoning-text';
-          text.textContent = reasoningPart;
-
-          reasoningBox.appendChild(title);
-          reasoningBox.appendChild(text);
-          botMessage.appendChild(reasoningBox);
-        }
-
-        // Output XML formattato
-        if (outputPart) {
-          const md = marked.parse('```xml\n' + outputPart + '\n```');
-          const outputBox = document.createElement('div');
-          outputBox.className = 'output-block';
-          outputBox.innerHTML = md;
-
-          botMessage.appendChild(outputBox);
-          hljs.highlightAll();
-        }
-      } else {
-        // MODELLO CHAT: rendering standard
-        botMessage.innerHTML = ''; // svuota il messaggio prima
-
-        const header = document.createElement('div');
-        header.className = 'msg-header';
-        header.innerText = 'System';
-        botMessage.appendChild(header);
-
-        const content = document.createElement('div');
-        content.className = 'msg-content';
-        content.innerHTML = marked.parse(fullRaw);
-        botMessage.appendChild(content);
-
-        hljs.highlightAll();
-      }
-
-      const endTime = Date.now();
-      const elapsed = Math.floor((endTime - startTime) / 1000);
-
-      let timeString = '';
-
-      if (elapsed < 60) {
-        timeString = `${elapsed} seconds`;
-      } else {
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        timeString = `${minutes} min ${seconds} sec`;
-      }
-
-      const replyInfo = document.createElement('div');
-      replyInfo.className = 'reply-time';
-      replyInfo.textContent = `Replied in ${timeString}`;
-      botMessage.appendChild(replyInfo, botMessage.firstChild);
-    }
-
-    if (xmlResponse) {
-      try {
-        await modeler.importXML(xmlResponse);
-        addMsg('Diagram generated successfully ✅', 'bot');
-      } catch (error) {
-        console.error('❌ Errore durante importXML:', error);
-        addMsg('Generated BPMN contains errors ⚠️. Please try again.', 'bot');
-      }
-    } else {
-      addMsg('No valid BPMN XML found ❌. Please try again.', 'bot');
-    }
-
+    const xmlResponse = extractXmlFromResponse(ctx.fullRaw);
+    await tryImportBpmn(xmlResponse);
   } catch (error) {
     console.error('API Error:', error);
-    chatLog.removeChild(typingIndicator);
+    chatLog.removeChild(ctx.typingIndicator);
     addMsg(`Error: ${error.message}`, 'bot');
   }
 }
+
 
 function extractXmlFromResponse(content) {
   const match = content.match(/<bpmn:definitions[\s\S]*?<\/bpmn:definitions>/);
@@ -347,6 +378,7 @@ function addBotMessage(text) {
 }
 
 
+/* ─────────── EXPORTING BUTTONS HANDLERS ─────────── */
 
 const exportSVGBtn = document.getElementById('exportSVG');
 exportSVGBtn.addEventListener('click', exportSVG);
@@ -372,6 +404,75 @@ function download(filename, data) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+
+/* ─────────── ZOOMING BUTTONS HANDLERS ─────────── */
+
+const zoomInBtn = document.getElementById('zoom-in');
+const zoomOutBtn = document.getElementById('zoom-out');
+const zoomResetBtn = document.getElementById('zoom-reset');
+
+zoomInBtn.addEventListener('click', () => {
+  changeZoom(1.2); // Zoom in by +20%
+});
+
+zoomOutBtn.addEventListener('click', () => {
+  changeZoom(0.8); // Zoom out by -20%
+});
+
+zoomResetBtn.addEventListener('click', () => {
+  modeler.get('canvas').zoom('fit-viewport');
+});
+
+function changeZoom(factor) {
+  const canvas = modeler.get('canvas');
+  const currentZoom = canvas.zoom();
+  const newZoom = currentZoom * factor;
+
+  // Optional: limit min/max zoom
+  if (newZoom < 0.2 || newZoom > 4) return;
+
+  canvas.zoom(newZoom);
+}
+
+
+/* ─────────── AUTO LAYOUT HANDLER ─────────── */
+
+const autoLayoutBtn = document.getElementById('autoLayout');
+autoLayoutBtn.addEventListener('click', autoLayout);
+
+async function autoLayout() {
+  try {
+    if (typeof BpmnAutoLayout === 'undefined') {
+      throw new Error('BpmnAutoLayout not loaded');
+    }
+
+    const { xml } = await modeler.saveXML({ format: true });
+
+    const result = await BpmnAutoLayout.layoutProcess(xml);
+
+    if (!result) {
+      throw new Error('layoutProcess did not return any result');
+    }
+
+    // Proviamo a capire: se result è una stringa XML direttamente
+    let layoutedXml;
+    if (typeof result === 'string') {
+      layoutedXml = result;
+    } else if (result.xml) {
+      layoutedXml = result.xml;
+    } else {
+      throw new Error('layoutProcess result is not XML');
+    }
+
+    await modeler.importXML(layoutedXml);
+
+    addBotMessage('✅ Auto-layout applied to current diagram');
+  } catch (error) {
+    console.error('Auto-layout error:', error);
+    addBotMessage('❌ Failed to auto-layout diagram: ' + error.message);
+  }
 }
 
 // Fullscreen toggle button
@@ -411,7 +512,9 @@ document.addEventListener('click', e => {
   }
 });
 
-    // Blocca il comportamento di default sulla finestra
+/* ─────────── DRAG & DROP HANDLERS ─────────── */
+
+// Prevent default behavior on the window
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
   window.addEventListener(eventName, e => {
     e.preventDefault();
@@ -419,7 +522,7 @@ document.addEventListener('click', e => {
   }, { passive: false });
 });
 
-// Poi il tuo drag&drop locale
+// Custom drag&drop behavior
 ['dragenter', 'dragover'].forEach(ev => fileDrop.addEventListener(ev, e => {
   e.preventDefault();
   fileDrop.classList.add('dragover');
@@ -443,6 +546,8 @@ fileInput.addEventListener('change', e => {
   handleFiles(e.target.files);
 });
 
+
+/* ─────────── FILE INPUT HANDLER ─────────── */
 
 function handleFiles(list) {
       [...list].forEach(file => {
@@ -536,73 +641,10 @@ function addMsg(m, w) {
       const d = document.createElement('div');
       d.className = 'chat-msg ' + w;
 
-      d.innerHTML = `<div class="msg-header">${w === 'user' ? 'User' : 'System'}</div><div class="msg-content">${marked.parse(m)}</div>`;  // support Markdown e safe parsing 
+      // support Markdown e safe parsing 
+      d.innerHTML = `<div class="msg-header">${w === 'user' ? 'User' : 'System'}</div><div class="msg-content">${marked.parse(m)}</div>`;  
       hljs.highlightAll();
 
       chatLog.appendChild(d);
       chatLog.scrollTop = chatLog.scrollHeight;
     }
-
-// autoLayout Button
-const autoLayoutBtn = document.getElementById('autoLayout');
-autoLayoutBtn.addEventListener('click', autoLayout);
-
-async function autoLayout() {
-  try {
-    if (typeof BpmnAutoLayout === 'undefined') {
-      throw new Error('BpmnAutoLayout not loaded');
-    }
-
-    const { xml } = await modeler.saveXML({ format: true });
-
-    const result = await BpmnAutoLayout.layoutProcess(xml);
-
-    if (!result) {
-      throw new Error('layoutProcess did not return any result');
-    }
-
-    // Proviamo a capire: se result è una stringa XML direttamente
-    let layoutedXml;
-    if (typeof result === 'string') {
-      layoutedXml = result;
-    } else if (result.xml) {
-      layoutedXml = result.xml;
-    } else {
-      throw new Error('layoutProcess result is not XML');
-    }
-
-    await modeler.importXML(layoutedXml);
-
-    addBotMessage('✅ Auto-layout applied to current diagram');
-  } catch (error) {
-    console.error('Auto-layout error:', error);
-    addBotMessage('❌ Failed to auto-layout diagram: ' + error.message);
-  }
-}
-
-const zoomInBtn = document.getElementById('zoom-in');
-const zoomOutBtn = document.getElementById('zoom-out');
-const zoomResetBtn = document.getElementById('zoom-reset');
-
-zoomInBtn.addEventListener('click', () => {
-  changeZoom(1.2); // Zoom in by +20%
-});
-
-zoomOutBtn.addEventListener('click', () => {
-  changeZoom(0.8); // Zoom out by -20%
-});
-
-zoomResetBtn.addEventListener('click', () => {
-  modeler.get('canvas').zoom('fit-viewport');
-});
-
-function changeZoom(factor) {
-  const canvas = modeler.get('canvas');
-  const currentZoom = canvas.zoom();
-  const newZoom = currentZoom * factor;
-
-  // Optional: limit min/max zoom
-  if (newZoom < 0.2 || newZoom > 4) return;
-
-  canvas.zoom(newZoom);
-}

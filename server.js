@@ -1,3 +1,4 @@
+// Copyright (c) 2025 Davide Chen
 // SPDX-License-Identifier: MIT
 
 import express from 'express';
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Carica il system prompt all'avvio
+/* ─────────── LOADS SYSTEM PROMPT ON STARTUP ─────────── */
 const SYSTEM_PROMPT_PATH = path.join(__dirname, 'system_prompt.txt');
 const SYSTEM_PROMPT = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf-8');
 
@@ -25,7 +26,7 @@ const SYSTEM_PROMPT = fs.readFileSync(SYSTEM_PROMPT_PATH, 'utf-8');
 // Serve static files (HTML, CSS, JS) from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Backend API endpoint to proxy DeepSeek API
+/* ─────────── BACKEND PROXY FOR EXTERNAL LLM APIs ─────────── */
 app.post('/api/process', express.json(), async (req, res) => {
 
 const userPrompt = req.body.prompt;
@@ -94,7 +95,7 @@ const reasoner = req.body.reasoner;
   }
 });
 
-// Start the server
+/* ─────────── START THE SERVER ─────────── */
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });

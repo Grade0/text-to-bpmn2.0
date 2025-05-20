@@ -1,3 +1,4 @@
+// Copyright (c) 2025 Davide Chen
 // SPDX-License-Identifier: MIT
 
 import resolve  from '@rollup/plugin-node-resolve';
@@ -13,8 +14,8 @@ export default {
     sourcemap: true
   },
   plugins: [
-    bpmnlint(),          // incapsula .bpmnlintrc
+    bpmnlint(),
     resolve(), commonjs(),
-    terser()             // facoltativo: minifica in prod
+    terser()
   ]
 };

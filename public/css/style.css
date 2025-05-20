@@ -346,7 +346,6 @@ body {
   width: 90%;
 }
 
-/* Contenitore che simula il bordo unico */
 .textarea-container {
   border: 2px solid #3b82f6;
   border-radius: 12px;
@@ -372,7 +371,6 @@ body {
   border-radius: 0px;
 }
 
-/* Toggle ben separato sotto la textarea */
 .model-toggle-wrap {
   display: flex;
   align-items: center;
@@ -400,7 +398,6 @@ body {
   color: white;
 }
 
-/* Pulsante invio resta posizionato bene */
 #send-btn {
   position: absolute;
   right: calc(5% + .6rem);
@@ -505,10 +502,7 @@ body {
   border-left: 1px solid #3b82f6;
 }
 
-
-
 /* bpmn-js-bpmnlint.css style  */
-
 .djs-parent {
   --bjsl-color-info: var(--color-blue-205-100-45);
   --bjsl-color-warning: #f7c71a;
@@ -700,11 +694,6 @@ body {
   font-weight: bold;
   border-radius: 20px;
 }
-
-
-/**
- * Summary button styles
- */
 
 .bjsl-button {
   border-radius: 100px;
