@@ -97,7 +97,7 @@ You can easily host it using platforms like:
 1. Push your project to GitHub.
 2. Create a new service on your hosting platform.
 3. Connect your GitHub repository.
-4. Set environment variable `DEEPSEEK_API_KEY` in the platform dashboard.
+4. Set environment variable `DEEPSEEK_API_KEY` and `OPENAI_API_KEY` in the platform dashboard.
 5. Deploy.
 
 That's it — your app will be live with its own URL!
