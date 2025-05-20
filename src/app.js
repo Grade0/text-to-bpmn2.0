@@ -124,7 +124,7 @@ async function callModelAPI(prompt, onDataChunk) {
         const parsed = JSON.parse(jsonStr);
         const delta = parsed?.choices?.[0]?.delta;
 
-        // Leggi il chunk da uno dei 2 modelli
+        // Read the chunk from one of the two models
         const chunk =
           typeof delta?.reasoning_content === 'string'
             ? delta.reasoning_content
@@ -430,7 +430,7 @@ function changeZoom(factor) {
   const currentZoom = canvas.zoom();
   const newZoom = currentZoom * factor;
 
-  // Optional: limit min/max zoom
+  // limit min/max zoom
   if (newZoom < 0.2 || newZoom > 4) return;
 
   canvas.zoom(newZoom);
@@ -456,7 +456,7 @@ async function autoLayout() {
       throw new Error('layoutProcess did not return any result');
     }
 
-    // Proviamo a capire: se result è una stringa XML direttamente
+    // Check if the result il a XML string
     let layoutedXml;
     if (typeof result === 'string') {
       layoutedXml = result;
@@ -554,7 +554,7 @@ function handleFiles(list) {
         const reader = new FileReader();
 
           if (file.type.startsWith('text/')) {
-            // File di testo (.txt)
+            // Text files (.txt)
             reader.onload = function(e) {
               const textContent = e.target.result;
               const safeContent = textContent.replace(/\n/g, '<br>');
@@ -563,7 +563,7 @@ function handleFiles(list) {
             };
             reader.readAsText(file);
           } else if (file.type.startsWith('image/')) {
-          // Immagini (.jpg, .png, ecc.)
+          // Images(.jpg, .png, ecc.)
             reader.onload = function(e) {
             const imgSrc = e.target.result;
 
@@ -631,7 +631,7 @@ function handleFiles(list) {
             };
             reader.readAsArrayBuffer(file);
           } else {
-          // Altro tipo di file
+          // Other kind of files
           addMsg(`📎 ${file.name} (${Math.round(file.size/1024)} KB) added (unsupported file type).`, 'user');
         }
       });
