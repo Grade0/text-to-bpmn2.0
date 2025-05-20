@@ -129,4 +129,4 @@ https://your-app-name.onrender.com
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE). Copyright © 2025 Davide Chen.
